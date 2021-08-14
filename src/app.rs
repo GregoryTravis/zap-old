@@ -1,4 +1,5 @@
 use eframe::{egui, epi};
+use egui::{containers::*, *};
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
@@ -19,6 +20,31 @@ impl Default for TemplateApp {
             label: "Hello World!".to_owned(),
             value: 2.7,
         }
+    }
+}
+
+impl TemplateApp {
+    pub fn ui(&mut self, ui: &mut Ui) {
+        println!("Ui");
+        ui.ctx().request_repaint();
+        let painter = Painter::new(
+            ui.ctx().clone(),
+            ui.layer_id(),
+            ui.available_rect_before_wrap_finite(),
+        );
+        let rect = painter.clip_rect();
+        let to_screen = emath::RectTransform::from_to(
+            Rect::from_center_size(Pos2::ZERO, rect.square_proportions()),
+            rect,
+        );
+        let points = [pos2(-0.25, -0.25), pos2(0.25, 0.25)];
+        let line = [to_screen * points[0], to_screen * points[1]];
+        let mut shapes: Vec<Shape> = Vec::new();
+        let width = 8.0;
+        let color = Color32::from_rgb(80, 255, 80);
+        shapes.push(Shape::line_segment(line, (width, color)));
+        painter.extend(shapes);
+        // ui.expand_to_include_rect(painter.clip_rect());
     }
 }
 
@@ -87,17 +113,21 @@ impl epi::App for TemplateApp {
             });
         });
 
-        egui::CentralPanel::default().show(ctx, |ui| {
-            // The central panel the region left after adding TopPanel's and SidePanel's
+        egui::CentralPanel::default()
+            .frame(Frame::dark_canvas(&ctx.style()))
+            .show(ctx, |ui| self.ui(ui));
 
-            ui.heading("egui template");
-            ui.hyperlink("https://github.com/emilk/egui_template");
-            ui.add(egui::github_link_file!(
-                "https://github.com/emilk/egui_template/blob/master/",
-                "Source code."
-            ));
-            egui::warn_if_debug_build(ui);
-        });
+        // egui::CentralPanel::default().show(ctx, |ui| {
+        //     // The central panel the region left after adding TopPanel's and SidePanel's
+
+        //     ui.heading("egui template");
+        //     ui.hyperlink("https://github.com/emilk/egui_template");
+        //     ui.add(egui::github_link_file!(
+        //         "https://github.com/emilk/egui_template/blob/master/",
+        //         "Source code."
+        //     ));
+        //     egui::warn_if_debug_build(ui);
+        // });
 
         if false {
             egui::Window::new("Window").show(ctx, |ui| {
